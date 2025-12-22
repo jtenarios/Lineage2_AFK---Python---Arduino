@@ -56,13 +56,30 @@ time.sleep(2)
 def human_keypress(key):
     ser.write(f"{key}\n".encode())
     time.sleep(random.uniform(*KEY_PRESS_TIME))
-    
+
     # Print only some KEYS
     if key in ["F7", "F10", "F12"]:
         print("Acción " + f"{key}\n")
 
     if key in ["F10"]:
-        time.sleep(6) # esperar 5 seg que acaben las danzas
+        time.sleep(6)  # esperar 5 seg que acaben las danzas
+
+
+def print_counters(current_time, keys):
+    lines = []
+
+    for key, interval, last_name in keys:
+        if interval <= 0:
+            continue
+
+        remaining = int((globals()[last_name] + interval) - current_time)
+        if remaining < 0:
+            continue
+
+        lines.append(f"{key} en {remaining} s")
+
+    if lines:
+        print(" | ".join(lines))
 
 
 def now():
@@ -88,6 +105,8 @@ last_f12 = now()
 
 state = "COMBAT"
 
+last_counter_print = 0
+
 print("AFK bot activo. No mires la pantalla demasiado, canta.")
 
 while True:
@@ -108,10 +127,18 @@ while True:
         (KEY_F12, KEY_F12_INTERVAL, "last_f12"),
     ]
 
+    # ---- CONTADOR POR TECLA (CADA SEGUNDO) ----
+    if current_time - last_counter_print >= 1:
+        print_counters(current_time, keys)
+        last_counter_print = current_time
+
+    # ---- EJECUCIÓN ----
     for key, interval, last_name in keys:
         if interval > 0 and current_time - globals()[last_name] >= interval:
             human_keypress(key)
             globals()[last_name] = current_time
+
+    time.sleep(0.01)
 
     # if KEY_F1_INTERVAL > 0 and current_time - last_f1 >= KEY_F1_INTERVAL:
     #     human_keypress(KEY_F1)
