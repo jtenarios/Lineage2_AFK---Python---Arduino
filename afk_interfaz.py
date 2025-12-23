@@ -15,18 +15,18 @@ KEY_PRESS_TIME = (0.04, 0.12)
 
 # Intervalos en segundos (0 o None = desactivado)
 INTERVAL = {
-    "F1": 0,
+    "F1": (3, 5),
     "F2": 0,
     "F3": (0.8, 2.0),  # /atack
     "F4": (0.8, 2.0),  # /pickup
     "F5": 0,
     "F6": 0,
-    "F7": (5, 10),  # combat
+    "F7": (5, 6),  # combat
     "F8": 0,
     "F9": 0,
     "F10": 120,  # dance buffs
     "F11": 0,
-    "F12": 180,  # heal potions
+    "F12": 60,  # heal potions
     "ESC": (2, 4),  # esc key
 }
 
@@ -80,6 +80,8 @@ class SharedState:
 
         self.last_action = "-"
 
+        self.block_until: Optional[float] = None
+
 
 STATE = SharedState()
 
@@ -132,6 +134,13 @@ def scheduler_thread():
 
                     t = now()
 
+                    with STATE.lock:
+                        block_until = STATE.block_until
+
+                    if block_until and t < block_until:
+                        time.sleep(0.05)
+                        continue
+
                     for key in ALL_KEYS:
                         with STATE.lock:
                             due = STATE.schedule.get(key)
@@ -141,6 +150,12 @@ def scheduler_thread():
 
                         if t >= due:
                             send_key(ser, key)
+
+                            if key == "F10":
+                                with STATE.lock:
+                                    STATE.block_until = now() + EXTRA_BLOCK.get(
+                                        "F10", 0.0
+                                    )
 
                             with STATE.lock:
                                 STATE.last_action = key
