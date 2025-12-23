@@ -15,9 +15,9 @@ KEY_PRESS_TIME = (0.04, 0.12)
 
 # Intervalos en segundos (0 o None = desactivado)
 INTERVAL = {
-    "F1": (3, 5),
+    "F1": 0, # (3, 5),
     "F2": 0,
-    "F3": (0.8, 2.0),  # /atack
+    "F3": 0, # (0.8, 2.0),  # /atack
     "F4": (0.8, 2.0),  # /pickup
     "F5": 0,
     "F6": 0,
@@ -27,7 +27,7 @@ INTERVAL = {
     "F10": 120,  # dance buffs
     "F11": 0,
     "F12": 60,  # heal potions
-    "ESC": (2, 4),  # esc key
+    "ESC": 0 # (2, 4),  # esc key
 }
 
 PRINT_KEYS = {"F7", "F10", "F12"}
