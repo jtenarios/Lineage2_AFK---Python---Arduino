@@ -21,24 +21,26 @@ INTERVAL = {
     "F4": (0.8, 2.0),  # /pickup
     "F5": 0,
     "F6": 0,
-    "F7": (15, 20),    # combat
+    "F7": (5, 10),  # combat
     "F8": 0,
     "F9": 0,
-    "F10": 120,        # dance buffs
+    "F10": 120,  # dance buffs
     "F11": 0,
-    "F12": 180,        # heal potions
+    "F12": 180,  # heal potions
+    "ESC": (2, 4),  # esc key
 }
 
 PRINT_KEYS = {"F7", "F10", "F12"}
 EXTRA_BLOCK = {"F10": 6.0}  # pausa extra bloqueante tras pulsar F10 (como tu script)
 
-ALL_KEYS = [f"F{i}" for i in range(1, 13)]
+ALL_KEYS = [f"F{i}" for i in range(1, 13)] + ["ESC"]
 Interval = Union[float, Tuple[float, float]]
 
 
 # ---------------- HELPERS ----------------
 def now() -> float:
     return time.monotonic()
+
 
 def next_interval(value: Interval) -> float:
     """value puede ser número fijo o tupla (min,max)."""
@@ -47,6 +49,7 @@ def next_interval(value: Interval) -> float:
     if isinstance(value, tuple):
         return random.uniform(*value)
     return float(value)
+
 
 def format_interval(cfg: Interval) -> str:
     if not cfg:
@@ -71,7 +74,9 @@ class SharedState:
         self.last_due: Dict[str, Optional[float]] = {k: None for k in ALL_KEYS}
 
         # last_interval_used[key] = interval seconds actually scheduled for this cycle
-        self.last_interval_used: Dict[str, Optional[float]] = {k: None for k in ALL_KEYS}
+        self.last_interval_used: Dict[str, Optional[float]] = {
+            k: None for k in ALL_KEYS
+        }
 
         self.last_action = "-"
 
@@ -90,6 +95,7 @@ def send_key(ser: serial.Serial, key: str) -> None:
     extra = EXTRA_BLOCK.get(key, 0.0)
     if extra:
         time.sleep(extra)
+
 
 def scheduler_thread():
     while True:
@@ -175,10 +181,14 @@ class KeyRow(ttk.Frame):
         self.key_lbl = ttk.Label(self, text=key, width=4)
         self.key_lbl.grid(row=0, column=0, sticky="w")
 
-        self.interval_lbl = ttk.Label(self, text=format_interval(INTERVAL.get(key, 0)), width=10)
+        self.interval_lbl = ttk.Label(
+            self, text=format_interval(INTERVAL.get(key, 0)), width=10
+        )
         self.interval_lbl.grid(row=0, column=1, sticky="w", padx=(6, 10))
 
-        self.pb = ttk.Progressbar(self, orient="horizontal", length=320, mode="determinate", maximum=100)
+        self.pb = ttk.Progressbar(
+            self, orient="horizontal", length=320, mode="determinate", maximum=100
+        )
         self.pb.grid(row=0, column=2, sticky="ew", padx=(0, 10))
 
         self.cool_lbl = ttk.Label(self, text="-", width=10)
@@ -190,11 +200,23 @@ class KeyRow(ttk.Frame):
         if not self.enabled:
             self.pb["value"] = 0
 
-    def update_row(self, t: float, due: Optional[float], last_due: Optional[float], interval_used: Optional[float]):
+    def update_row(
+        self,
+        t: float,
+        due: Optional[float],
+        last_due: Optional[float],
+        interval_used: Optional[float],
+    ):
         cfg = INTERVAL.get(self.key, 0)
         enabled = bool(cfg)
 
-        if not enabled or due is None or last_due is None or not interval_used or interval_used <= 0:
+        if (
+            not enabled
+            or due is None
+            or last_due is None
+            or not interval_used
+            or interval_used <= 0
+        ):
             self.pb["value"] = 0
             self.cool_lbl.config(text="-")
             return
@@ -237,7 +259,9 @@ class App(tk.Tk):
         ttk.Label(top, textvariable=self.status_var).pack(side="left", padx=(6, 18))
 
         ttk.Label(top, text="Última tecla:").pack(side="left")
-        ttk.Label(top, textvariable=self.last_action_var).pack(side="left", padx=(6, 18))
+        ttk.Label(top, textvariable=self.last_action_var).pack(
+            side="left", padx=(6, 18)
+        )
 
         self.stop_btn = ttk.Button(top, text="Salir", command=self.on_close)
         self.stop_btn.pack(side="right")
@@ -247,8 +271,12 @@ class App(tk.Tk):
         hdr.pack(fill="x")
 
         ttk.Label(hdr, text="Key", width=4).grid(row=0, column=0, sticky="w")
-        ttk.Label(hdr, text="Intervalo", width=10).grid(row=0, column=1, sticky="w", padx=(6, 10))
-        ttk.Label(hdr, text="Progreso hasta siguiente", width=28).grid(row=0, column=2, sticky="w")
+        ttk.Label(hdr, text="Intervalo", width=10).grid(
+            row=0, column=1, sticky="w", padx=(6, 10)
+        )
+        ttk.Label(hdr, text="Progreso hasta siguiente", width=28).grid(
+            row=0, column=2, sticky="w"
+        )
         ttk.Label(hdr, text="Cooldown", width=10).grid(row=0, column=3, sticky="e")
 
         # Rows
