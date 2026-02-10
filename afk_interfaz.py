@@ -8,7 +8,7 @@ import tkinter as tk
 from tkinter import ttk
 
 # ---------------- CONFIG ----------------
-PORT = "COM17"
+PORT = "COM3"
 BAUDRATE = 9600
 
 KEY_PRESS_TIME = (0.04, 0.12)
